@@ -30,3 +30,6 @@ yarn-error.log*
 
 # Planes de Cursor (no versionar)
 .cursor/plans/
+
+# Enunciado / tarea (local solamente)
+Tarea.txt
