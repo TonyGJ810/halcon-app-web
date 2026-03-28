@@ -1,11 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-export function CreateUserForm({ roles }: { roles: { id: string; name: string }[] }) {
+
+export function CreateUserForm({
+  roles,
+  departments,
+}: {
+  roles: { id: string; name: string }[]
+  departments: { id: string; name: string }[]
+}) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [roleId, setRoleId] = useState(roles[0]?.id ?? '')
+  const [departmentId, setDepartmentId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -19,7 +27,13 @@ export function CreateUserForm({ roles }: { roles: { id: string; name: string }[
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, fullName, roleId }),
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          roleId,
+          departmentId: departmentId || null,
+        }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -31,6 +45,7 @@ export function CreateUserForm({ roles }: { roles: { id: string; name: string }[
       setPassword('')
       setFullName('')
       setRoleId(roles[0]?.id ?? '')
+      setDepartmentId('')
       window.location.reload()
     } finally {
       setLoading(false)
@@ -81,6 +96,19 @@ export function CreateUserForm({ roles }: { roles: { id: string; name: string }[
           >
             {roles.map((r) => (
               <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Departamento</label>
+          <select
+            value={departmentId}
+            onChange={(e) => setDepartmentId(e.target.value)}
+            className="w-full rounded border border-slate-300 px-3 py-2"
+          >
+            <option value="">— Ninguno —</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>{d.name}</option>
             ))}
           </select>
         </div>

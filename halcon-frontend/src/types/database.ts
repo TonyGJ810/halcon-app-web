@@ -8,12 +8,19 @@ export interface Role {
   created_at: string
 }
 
+export interface Department {
+  id: string
+  name: string
+  created_at: string
+}
+
 export interface User {
   id: string
   auth_id: string | null
   email: string
   full_name: string
   role_id: string
+  department_id: string | null
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -24,6 +31,8 @@ export interface Order {
   client_number: string
   invoice_number: string
   status: OrderStatus
+  current_process_name: string | null
+  process_updated_at: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -44,4 +53,6 @@ export interface OrderStatusResult {
   status: string
   photo_url: string | null
   evidence_type: string | null
+  current_process_name: string | null
+  process_updated_at: string | null
 }

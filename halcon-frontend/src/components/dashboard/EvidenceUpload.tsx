@@ -8,7 +8,16 @@ const EVIDENCE_TYPES = [
   { value: 'delivery', label: 'Entrega' },
 ] as const
 
-export function EvidenceUpload({ orderId, userId }: { orderId: string; userId: string }) {
+export function EvidenceUpload({
+  orderId,
+  userId,
+  orderStatus,
+}: {
+  orderId: string
+  userId: string
+  orderStatus: string
+}) {
+  const canUpload = orderStatus === 'In route' || orderStatus === 'Delivered'
   const [evidenceType, setEvidenceType] = useState<'loading' | 'unloading' | 'delivery'>('delivery')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +53,15 @@ export function EvidenceUpload({ orderId, userId }: { orderId: string; userId: s
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!canUpload) {
+    return (
+      <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        La evidencia fotográfica solo está disponible cuando el pedido está <strong>En ruta</strong> o{' '}
+        <strong>Entregado</strong>.
+      </p>
+    )
   }
 
   return (

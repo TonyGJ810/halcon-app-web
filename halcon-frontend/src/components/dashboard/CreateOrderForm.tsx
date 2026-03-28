@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 
-const STATUS_OPTIONS = ['Ordered', 'In process', 'In route', 'Delivered'] as const
-
 export function CreateOrderForm({ currentUserId }: { currentUserId?: string }) {
   const [clientNumber, setClientNumber] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('')

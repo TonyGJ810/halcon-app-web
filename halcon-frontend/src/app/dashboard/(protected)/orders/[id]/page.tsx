@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { EvidenceUpload } from '@/components/dashboard/EvidenceUpload'
+import { UpdateOrderDetailsForm } from '@/components/dashboard/UpdateOrderDetailsForm'
 import Link from 'next/link'
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,10 +20,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const roleName = (Array.isArray(profile?.roles) ? profile.roles[0] : profile?.roles)?.name ?? ''
   const canAddEvidence = ['Admin', 'Route', 'Warehouse'].includes(roleName)
+  const canEditFields = ['Admin', 'Sales', 'Purchasing', 'Warehouse', 'Route'].includes(roleName)
+  const canEditProcess = ['Admin', 'Purchasing', 'Warehouse', 'Route'].includes(roleName)
 
   const { data: order } = await adminClient
     .from('orders')
-    .select('id, client_number, invoice_number, status, created_at')
+    .select(
+      'id, client_number, invoice_number, status, current_process_name, process_updated_at, created_at'
+    )
     .eq('id', id)
     .is('deleted_at', null)
     .single()
@@ -43,9 +48,28 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <h1 className="mb-6 text-2xl font-bold text-slate-800">
         Pedido {order.client_number} / {order.invoice_number}
       </h1>
-      <p className="mb-6 text-slate-600">Estado: {order.status}</p>
+      <p className="mb-2 text-slate-600">Estado: {order.status}</p>
+      {order.status === 'In process' && (
+        <div className="mb-6 text-sm text-slate-600">
+          <p>
+            Proceso: {order.current_process_name ?? '—'}
+            {order.process_updated_at && (
+              <span className="ml-2">({new Date(order.process_updated_at).toLocaleString('es')})</span>
+            )}
+          </p>
+        </div>
+      )}
+      <UpdateOrderDetailsForm
+        orderId={order.id}
+        clientNumber={order.client_number}
+        invoiceNumber={order.invoice_number}
+        status={order.status}
+        currentProcessName={order.current_process_name}
+        canEditFields={canEditFields}
+        canEditProcess={canEditProcess}
+      />
       {canAddEvidence && (
-        <EvidenceUpload orderId={order.id} userId={profile!.id} />
+        <EvidenceUpload orderId={order.id} userId={profile!.id} orderStatus={order.status} />
       )}
       {evidence && evidence.length > 0 && (
         <div className="mt-8">

@@ -5,3 +5,17 @@ INSERT INTO roles (id, name) VALUES
     ('a0000000-0000-0000-0000-000000000004', 'Warehouse'),
     ('a0000000-0000-0000-0000-000000000005', 'Route')
 ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO departments (id, name) VALUES
+    ('b0000000-0000-0000-0000-000000000001', 'Ventas'),
+    ('b0000000-0000-0000-0000-000000000002', 'Almacén'),
+    ('b0000000-0000-0000-0000-000000000003', 'Rutas'),
+    ('b0000000-0000-0000-0000-000000000004', 'Compras')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO orders (id, client_number, invoice_number, status, current_process_name, process_updated_at) VALUES
+    ('c0000000-0000-0000-0000-000000000001', '10001', 'FAC-DEMO-001', 'Ordered', NULL, NULL),
+    ('c0000000-0000-0000-0000-000000000002', '10002', 'FAC-DEMO-002', 'In process', 'Empaque y surtido', NOW() - INTERVAL '2 days'),
+    ('c0000000-0000-0000-0000-000000000003', '10003', 'FAC-DEMO-003', 'In route', NULL, NULL),
+    ('c0000000-0000-0000-0000-000000000004', '10004', 'FAC-DEMO-004', 'Delivered', NULL, NULL)
+ON CONFLICT (id) DO NOTHING;

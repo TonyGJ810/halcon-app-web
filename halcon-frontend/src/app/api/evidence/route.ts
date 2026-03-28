@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+const ALLOWED_STATUSES = ['In route', 'Delivered'] as const
+
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -31,6 +33,24 @@ export async function POST(request: Request) {
   const validTypes = ['loading', 'unloading', 'delivery']
   if (!validTypes.includes(evidenceType)) {
     return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })
+  }
+
+  const { data: order, error: orderErr } = await adminClient
+    .from('orders')
+    .select('id, status')
+    .eq('id', orderId)
+    .is('deleted_at', null)
+    .single()
+
+  if (orderErr || !order) {
+    return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
+  }
+
+  if (!ALLOWED_STATUSES.includes(order.status as (typeof ALLOWED_STATUSES)[number])) {
+    return NextResponse.json(
+      { error: 'Solo se puede subir evidencia con el pedido En ruta o Entregado' },
+      { status: 400 }
+    )
   }
 
   const ext = file.name.split('.').pop() ?? 'jpg'

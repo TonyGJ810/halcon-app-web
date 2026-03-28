@@ -86,7 +86,7 @@ export function OrdersList({
               <th className="px-4 py-3 font-medium text-slate-700">Factura</th>
               <th className="px-4 py-3 font-medium text-slate-700">Estado</th>
               <th className="px-4 py-3 font-medium text-slate-700">Creado</th>
-              {(canUpdate || canDelete || canAddEvidence) && <th className="px-4 py-3 font-medium text-slate-700">Acciones</th>}
+              <th className="px-4 py-3 font-medium text-slate-700">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -112,24 +112,20 @@ export function OrdersList({
                   )}
                 </td>
                 <td className="px-4 py-3">{new Date(o.created_at).toLocaleDateString('es')}</td>
-                {(canUpdate || canDelete || canAddEvidence) && (
-                  <td className="px-4 py-3 flex gap-2">
-                    {canAddEvidence && (
-                      <a href={`/dashboard/orders/${o.id}`} className="text-amber-600 hover:underline">
-                        Evidencia
-                      </a>
-                    )}
-                    {canDelete && (
-                      <button
-                        onClick={() => handleSoftDelete(o.id)}
-                        disabled={updating === o.id}
-                        className="text-red-600 hover:underline disabled:opacity-50"
-                      >
-                        Eliminar
-                      </button>
-                    )}
-                  </td>
-                )}
+                <td className="px-4 py-3 flex flex-wrap gap-2">
+                  <a href={`/dashboard/orders/${o.id}`} className="text-amber-600 hover:underline">
+                    Ver
+                  </a>
+                  {canDelete && (
+                    <button
+                      onClick={() => handleSoftDelete(o.id)}
+                      disabled={updating === o.id}
+                      className="text-red-600 hover:underline disabled:opacity-50"
+                    >
+                      Eliminar
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

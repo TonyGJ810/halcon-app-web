@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { UsersList } from '@/components/dashboard/UsersList'
 import { CreateUserForm } from '@/components/dashboard/CreateUserForm'
+import { userWithRoleAndDepartmentSelect } from '@/lib/models/relationships'
 
 export default async function UsersPage() {
   const supabase = await createClient()
@@ -29,21 +30,19 @@ export default async function UsersPage() {
   const roleName = (Array.isArray(profile?.roles) ? profile.roles[0] : profile?.roles)?.name ?? ''
   const isAdmin = roleName === 'Admin'
 
-  const { data: users } = await adminClient
-    .from('users')
-    .select('id, email, full_name, role_id, roles(id, name)')
-    .is('deleted_at', null)
+  const { data: users } = await adminClient.from('users').select(userWithRoleAndDepartmentSelect)
     .order('created_at', { ascending: false })
 
   const { data: roles } = await adminClient.from('roles').select('id, name').order('name')
+  const { data: departments } = await adminClient.from('departments').select('id, name').order('name')
 
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="mb-6 text-2xl font-bold text-slate-800">Usuarios</h1>
       {isAdmin ? (
         <>
-          <CreateUserForm roles={roles ?? []} />
-          <UsersList users={users ?? []} roles={roles ?? []} />
+          <CreateUserForm roles={roles ?? []} departments={departments ?? []} />
+          <UsersList users={users ?? []} roles={roles ?? []} departments={departments ?? []} />
         </>
       ) : (
         <p className="text-slate-600">No tienes permisos para gestionar usuarios.</p>

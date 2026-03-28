@@ -12,8 +12,8 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 export function OrderLookupForm() {
-  const [clientNumber, setClientNumber] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('')
+  const [clientNumber, setClientNumber] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<OrderStatusResult[]>([])
@@ -22,51 +22,45 @@ export function OrderLookupForm() {
     e.preventDefault()
     setError(null)
     setResults([])
-    if (!clientNumber.trim() || !invoiceNumber.trim()) {
-      setError('Ingresa número de cliente y factura')
+    if (!invoiceNumber.trim()) {
+      setError('Ingresa el número de factura')
       return
     }
     setLoading(true)
     try {
       const supabase = createClient()
       const { data, error: rpcError } = await supabase.rpc('get_order_status', {
-        p_client_number: clientNumber.trim(),
         p_invoice_number: invoiceNumber.trim(),
+        p_client_number: clientNumber.trim() || null,
       })
       if (rpcError) {
         setError(rpcError.message)
         return
       }
-      if (!data || data.length === 0) {
+      const rows = (data ?? []) as OrderStatusResult[]
+      if (rows.length === 0) {
         setError('No se encontró ningún pedido con esos datos')
         return
       }
-      setResults(data as OrderStatusResult[])
+      if (rows.length > 1 && !clientNumber.trim()) {
+        setError('Hay varios pedidos con esa factura. Indica también el número de cliente.')
+        return
+      }
+      setResults(rows)
     } finally {
       setLoading(false)
     }
   }
 
-  const status = results[0]?.status
-  const deliveredPhoto = results.find((r) => r.photo_url && r.status === 'Delivered')
+  const row = results[0]
+  const status = row?.status
+  const deliveredPhoto = status === 'Delivered' ? row?.photo_url : null
+  const processName = status === 'In process' ? row?.current_process_name : null
+  const processDate = status === 'In process' ? row?.process_updated_at : null
 
   return (
     <div className="w-full max-w-md space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="client" className="mb-2 block text-sm font-medium text-slate-700">
-            Número de cliente
-          </label>
-          <input
-            id="client"
-            type="text"
-            value={clientNumber}
-            onChange={(e) => setClientNumber(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-            placeholder="Ej: 12345"
-            disabled={loading}
-          />
-        </div>
         <div>
           <label htmlFor="invoice" className="mb-2 block text-sm font-medium text-slate-700">
             Número de factura
@@ -78,6 +72,21 @@ export function OrderLookupForm() {
             onChange={(e) => setInvoiceNumber(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             placeholder="Ej: FAC-001"
+            disabled={loading}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="client" className="mb-2 block text-sm font-medium text-slate-700">
+            Número de cliente <span className="font-normal text-slate-500">(opcional si la factura es única)</span>
+          </label>
+          <input
+            id="client"
+            type="text"
+            value={clientNumber}
+            onChange={(e) => setClientNumber(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            placeholder="Ej: 12345"
             disabled={loading}
           />
         </div>
@@ -93,17 +102,31 @@ export function OrderLookupForm() {
         </button>
       </form>
 
-      {results.length > 0 && (
+      {results.length > 0 && row && (
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p className="mb-2 text-sm font-medium text-slate-600">Estado del pedido</p>
           <p className="mb-4 text-xl font-semibold text-slate-800">
             {STATUS_LABELS[status] ?? status}
           </p>
-          {deliveredPhoto?.photo_url && status === 'Delivered' && (
+          {status === 'In process' && (
+            <div className="mb-4 space-y-1 border-t border-slate-100 pt-4 text-sm text-slate-700">
+              <p>
+                <span className="font-medium">Proceso: </span>
+                {processName ?? '—'}
+              </p>
+              {processDate && (
+                <p>
+                  <span className="font-medium">Fecha: </span>
+                  {new Date(processDate).toLocaleString('es')}
+                </p>
+              )}
+            </div>
+          )}
+          {deliveredPhoto && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-slate-600">Evidencia de entrega</p>
               <img
-                src={deliveredPhoto.photo_url}
+                src={deliveredPhoto}
                 alt="Evidencia de entrega"
                 className="max-h-64 w-full rounded-lg object-contain"
               />
