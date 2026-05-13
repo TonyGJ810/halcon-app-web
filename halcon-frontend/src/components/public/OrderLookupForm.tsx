@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import type { OrderStatusResult } from '@/types/database'
 
@@ -15,15 +16,13 @@ export function OrderLookupForm() {
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [clientNumber, setClientNumber] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<OrderStatusResult[]>([])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
     setResults([])
     if (!invoiceNumber.trim()) {
-      setError('Ingresa el número de factura')
+      toast.error('Ingresa el número de factura')
       return
     }
     setLoading(true)
@@ -34,19 +33,20 @@ export function OrderLookupForm() {
         p_client_number: clientNumber.trim() || null,
       })
       if (rpcError) {
-        setError(rpcError.message)
+        toast.error(rpcError.message)
         return
       }
       const rows = (data ?? []) as OrderStatusResult[]
       if (rows.length === 0) {
-        setError('No se encontró ningún pedido con esos datos')
+        toast.error('No se encontró ningún pedido con esos datos')
         return
       }
       if (rows.length > 1 && !clientNumber.trim()) {
-        setError('Hay varios pedidos con esa factura. Indica también el número de cliente.')
+        toast.error('Hay varios pedidos con esa factura. Indica también el número de cliente.')
         return
       }
       setResults(rows)
+      toast.success('Consulta realizada correctamente')
     } finally {
       setLoading(false)
     }
@@ -90,9 +90,6 @@ export function OrderLookupForm() {
             disabled={loading}
           />
         </div>
-        {error && (
-          <p className="text-sm text-red-600">{error}</p>
-        )}
         <button
           type="submit"
           disabled={loading}

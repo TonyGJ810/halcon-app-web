@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { toast } from 'sonner'
 
 const STATUS_LABELS: Record<string, string> = {
   'Ordered': 'Ordenado',
@@ -23,11 +25,17 @@ export function RestoreList({ orders }: { orders: OrderRow[] }) {
   async function handleRestore(orderId: string) {
     setRestoring(orderId)
     try {
-      await fetch('/api/orders/restore', {
+      const res = await fetch('/api/orders/restore', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId }),
       })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error((data as { error?: string }).error ?? 'No se pudo restaurar el pedido')
+        return
+      }
+      toast.success('Pedido restaurado')
       window.location.reload()
     } finally {
       setRestoring(null)
@@ -57,14 +65,18 @@ export function RestoreList({ orders }: { orders: OrderRow[] }) {
               <td className="px-4 py-3">{o.invoice_number}</td>
               <td className="px-4 py-3">{STATUS_LABELS[o.status] ?? o.status}</td>
               <td className="px-4 py-3">{new Date(o.deleted_at).toLocaleString('es')}</td>
-              <td className="px-4 py-3">
+              <td className="px-4 py-3 flex flex-wrap gap-2">
                 <button
+                  type="button"
                   onClick={() => handleRestore(o.id)}
                   disabled={restoring === o.id}
                   className="text-amber-600 hover:underline disabled:opacity-50"
                 >
                   {restoring === o.id ? 'Restaurando...' : 'Restaurar'}
                 </button>
+                <Link href={`/dashboard/orders/trash/${o.id}`} className="text-slate-700 hover:underline">
+                  Editar
+                </Link>
               </td>
             </tr>
           ))}

@@ -27,11 +27,10 @@ export default async function OrdersPage() {
   const canCreate = ['Admin', 'Sales'].includes(roleName)
   const canDelete = roleName === 'Admin'
   const canUpdateStatus = ['Admin', 'Purchasing', 'Warehouse', 'Route'].includes(roleName)
-  const canAddEvidence = ['Admin', 'Route', 'Warehouse'].includes(roleName)
 
   const { data: orders } = await adminClient
     .from('orders')
-    .select('id, client_number, invoice_number, status, created_at')
+    .select('id, client_number, invoice_number, client_legal_name, status, created_at')
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
@@ -43,7 +42,6 @@ export default async function OrdersPage() {
         orders={orders ?? []}
         canUpdate={canUpdateStatus}
         canDelete={canDelete}
-        canAddEvidence={canAddEvidence}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 
 type UserRow = {
   id: string
@@ -85,9 +86,10 @@ export function UsersList({
       })
       const data = await res.json()
       if (!res.ok) {
-        alert(data.error ?? 'Error al guardar')
+        toast.error(data.error ?? 'Error al guardar')
         return
       }
+      toast.success('Usuario actualizado')
       cancelEdit()
       window.location.reload()
     } finally {

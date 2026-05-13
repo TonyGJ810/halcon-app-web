@@ -35,6 +35,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })
   }
 
+  if (evidenceType === 'loading' && !['Route', 'Admin'].includes(roleName)) {
+    return NextResponse.json(
+      { error: 'Solo Ruta o Administrador pueden subir evidencia de carga' },
+      { status: 403 }
+    )
+  }
+
   const { data: order, error: orderErr } = await adminClient
     .from('orders')
     .select('id, status')

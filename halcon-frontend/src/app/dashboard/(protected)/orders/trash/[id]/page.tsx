@@ -1,10 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import { EvidenceUpload } from '@/components/dashboard/EvidenceUpload'
 import { UpdateOrderDetailsForm } from '@/components/dashboard/UpdateOrderDetailsForm'
 import Link from 'next/link'
 
-export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+/** Pedidos en papelera (borrado lógico): solo Admin puede editar. Sin subida de evidencias. */
+export default async function TrashOrderDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -13,23 +17,23 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const adminClient = await import('@/lib/supabase/admin').then((m) => m.createAdminClient())
   const { data: profile } = await adminClient
     .from('users')
-    .select('id, roles(name)')
+    .select('roles(name)')
     .eq('auth_id', user.id)
     .is('deleted_at', null)
     .single()
 
   const roleName = (Array.isArray(profile?.roles) ? profile.roles[0] : profile?.roles)?.name ?? ''
-  const canAddEvidence = ['Admin', 'Route', 'Warehouse'].includes(roleName)
-  const canEditFields = ['Admin', 'Sales', 'Purchasing', 'Warehouse', 'Route'].includes(roleName)
-  const canEditProcess = ['Admin', 'Purchasing', 'Warehouse', 'Route'].includes(roleName)
+  if (roleName !== 'Admin') {
+    redirect('/dashboard/restore')
+  }
 
   const { data: order } = await adminClient
     .from('orders')
     .select(
-      'id, client_number, invoice_number, client_legal_name, fiscal_data, delivery_address, notes, loading_unit, status, current_process_name, process_updated_at, created_at'
+      'id, client_number, invoice_number, client_legal_name, fiscal_data, delivery_address, notes, loading_unit, status, current_process_name, process_updated_at, created_at, deleted_at'
     )
     .eq('id', id)
-    .is('deleted_at', null)
+    .not('deleted_at', 'is', null)
     .single()
 
   if (!order) notFound()
@@ -40,11 +44,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     .eq('order_id', id)
     .order('created_at', { ascending: false })
 
+  const canEditFields = true
+  const canEditProcess = true
+
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/dashboard/orders" className="mb-4 inline-block text-amber-600 hover:underline">
-        ← Volver a pedidos
+      <Link href="/dashboard/restore" className="mb-4 inline-block text-amber-600 hover:underline">
+        ← Volver a papelera
       </Link>
+      <p className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        Este pedido está eliminado (papelera). Puedes corregir datos o restaurarlo desde la lista de papelera.
+      </p>
       <h1 className="mb-6 text-2xl font-bold text-slate-800">
         Pedido {order.client_number} / {order.invoice_number}
       </h1>
@@ -99,14 +109,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         canEditFields={canEditFields}
         canEditProcess={canEditProcess}
       />
-      {canAddEvidence && (
-        <EvidenceUpload
-          orderId={order.id}
-          userId={profile!.id}
-          orderStatus={order.status}
-          roleName={roleName}
-        />
-      )}
       {evidence && evidence.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-4 font-semibold text-slate-800">Evidencias</h2>

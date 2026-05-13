@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 export function CreateUserForm({
   roles,
@@ -15,13 +16,9 @@ export function CreateUserForm({
   const [roleId, setRoleId] = useState(roles[0]?.id ?? '')
   const [departmentId, setDepartmentId] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
-    setSuccess(false)
     setLoading(true)
     try {
       const res = await fetch('/api/users', {
@@ -37,10 +34,10 @@ export function CreateUserForm({
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error ?? 'Error al crear usuario')
+        toast.error(data.error ?? 'Error al crear usuario')
         return
       }
-      setSuccess(true)
+      toast.success('Usuario creado correctamente')
       setEmail('')
       setPassword('')
       setFullName('')
@@ -113,8 +110,6 @@ export function CreateUserForm({
           </select>
         </div>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      {success && <p className="mt-2 text-sm text-green-600">Usuario creado correctamente.</p>}
       <button
         type="submit"
         disabled={loading}

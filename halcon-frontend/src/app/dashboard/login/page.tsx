@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -8,21 +9,26 @@ function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  useEffect(() => {
+    if (searchParams.get('error') === 'auth') {
+      toast.error('Error de autenticación. Intenta de nuevo.')
+    }
+  }, [searchParams])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
     setLoading(true)
     try {
       const supabase = createClient()
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) {
-        setError(signInError.message)
+        toast.error(signInError.message)
         return
       }
+      toast.success('Sesión iniciada')
       router.push(searchParams.get('redirect') ?? '/dashboard')
       router.refresh()
     } finally {
@@ -63,10 +69,6 @@ function LoginForm() {
               disabled={loading}
             />
           </div>
-          {searchParams.get('error') === 'auth' && (
-            <p className="text-sm text-red-600">Error de autenticación. Intenta de nuevo.</p>
-          )}
-          {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"
             disabled={loading}

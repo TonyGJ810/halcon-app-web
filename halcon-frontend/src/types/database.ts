@@ -30,6 +30,11 @@ export interface Order {
   id: string
   client_number: string
   invoice_number: string
+  client_legal_name: string
+  fiscal_data: string | null
+  delivery_address: string
+  notes: string | null
+  loading_unit: string | null
   status: OrderStatus
   current_process_name: string | null
   process_updated_at: string | null
